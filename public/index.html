@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es"> <head>
+
+    <meta charset="UTF-8"> <title>Monitor de Infraestructura</title> <script src="socket.io/socket.io.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"> </script>
+
+    <style>
+        /*Configuramos el fondo oscuro (modo nocturno) y centramos todo el contenido */
+        body {font-family: sans-serif; background: #121212; color: white; display: flex; flex-direction: column; align-items: center; }
+
+        /* Creamos una 'tarjeta' gris oscuro donde vivira nuestro grafico para que resalte */
+        .container{ width: 80%; max-width: 800px; background: #1e1e1e; padding: 20px; border-radius: 15px; margin-top: 50px;}
+
+    </style>
+</head>
+<body>
+
+    <h1> Estado del servidor en vivo</h1>
+
+    <div class="container">
+        <canvas id="liveChart"></canvas>
+    </div>
+
+    <script>
+        // --- A. CONEXION ---
+        // Al ejecutar io(), el navegador busca el servidor Node.js y abre el tunel de comunicacion permanente.
+        const socket = io();
+
+        // --- B. PREPARACION DEL LIENZO ---
+        // Buscamos la etiqueta <canvas> por su ID y le decimos que vamos a dibujar en 2 dimensiones.
+        const ctx = document.getElementById('liveChart').getContext('2d');
+
+        // --- C. CREACION DEL GRAFICO ---
+        // Inicializamos un nuevo grafico pasandole el lienzo (ctx) y un objeto de configuracion.
+        const chart = new Chart(ctx, {
+            type: 'line', // El tipo de grafixo sera de lineas.
+            data: {
+                labels: [], // El eje X (tiempo): Empieza vacio, lo llenaremos con la hora del servidor.
+                datasets: [{
+                    label: 'Uso de memoria (%)', // La leyenda del grafico.
+                    borderColor: '#00d1b2', // Color de la linea (un tono verde agua)
+                    backgroundColor: 'rgba(0, 209, 178, 0.2)', // Color del relleno bajo la linea (con transparencia).
+                    data: [], // Eje Y (Porcentaje): Empieza vacio, lo llenaremos con los datos de RAM.
+                    fill: true // Le decimos que rellene el espacio debajo de la linea con el backgroundColor
+                }]
+            },
+            options: {
+                // Configuramos el Eje Y para que siempre vaya de 0 a 100 (ya que es un porcentaje)
+                scales: { y: { beginAtZero: true, max: 100} }
+            }
+        });
+
+        // --- D. RECEPCION Y ACTUALIZACION (el bucle en tiempo real) ---
+        // Nos quedamos escuchando (on) el evento 'datos-servidor' que Node.js emite cada segundo.
+        // La variable 'stats' contiene el objeto JSON con { cpu, mem, time } que envio el backend.
+        socket.on('datos-servidor', (stats) => {
+
+            // 1. Control de flujo: Si hay mas de 10 puntos en el grafico...
+            if(chart.data.labels.lenght > 10) {
+                // ...Borramos el primer elemento (el mas viejo) del eje X (Tiempo)
+                chart.data.labels.shift();
+                // ... Y borramos el primer elemento (el mas viejo) del eje Y (Memoria)
+                chart.data.datasets[0].data.shift();
+                // Esto crea el efecto visual de que el grafico "avanza" de derecha a izquierda.
+            }
+
+            // 2. INSERCION DE NUEVOS DATOS:
+            // Agregamos la hora exacra enviada por el servidor al final del eje X.
+            chart.data.labels.push(stats.time);
+            // Agregamos el porcentaje de memoria al final del eje Y.
+            chart.data.datasets[0].data.push(stats.mem);
+
+            // 3. Renderizado:
+            // Le ordenamos a Chart.js que repinte el lienzo con los nuevos datos que acabamos de meter.
+            chart.Update();
+        })
+    </script>
+    
+</body>
+</html>

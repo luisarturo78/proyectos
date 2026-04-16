@@ -1,0 +1,5 @@
+dashboard-monitoreo/
+├── server.js        <-- El motor (Node.js + Express)
+├── public/          <-- El mostrador (HTML + Gráficos)
+│   └── index.html
+└── package.json     <-- El inventario (Dependencias)
