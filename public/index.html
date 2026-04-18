@@ -57,12 +57,12 @@
         socket.on('datos-servidor', (stats) => {
 
             // 1. Control de flujo: Si hay mas de 10 puntos en el grafico...
-            if(chart.data.labels.lenght > 10) {
+            if(chart.data.labels.length > 10) {
                 // ...Borramos el primer elemento (el mas viejo) del eje X (Tiempo)
                 chart.data.labels.shift();
                 // ... Y borramos el primer elemento (el mas viejo) del eje Y (Memoria)
                 chart.data.datasets[0].data.shift();
-                // Esto crea el efecto visual de que el grafico "avanza" de derecha a izquierda.
+                // Esto crea el efecto visual de qulenghte el grafico "avanza" de derecha a izquierda.
             }
 
             // 2. INSERCION DE NUEVOS DATOS:
@@ -73,7 +73,7 @@
 
             // 3. Renderizado:
             // Le ordenamos a Chart.js que repinte el lienzo con los nuevos datos que acabamos de meter.
-            chart.Update();
+            chart.update();
         })
     </script>
     
